@@ -24,6 +24,204 @@ function showPosition(position) {
   "<br>Longitude: " + position.coords.longitude;
 }
 </script>
+  
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+
+<script>
+    let touch = false;
+    window.onload = function(){
+        var now = new Date();
+        // Check if touch is enabled
+        try {
+            document.createEvent("TouchEvent");
+            document.getElementById('touch').textContent = "Touch Enabled with " + navigator.maxTouchPoints + " touch points.";
+            touch = true;
+        } catch (e) {
+            document.getElementById('touch').textContent = "Touch not enabled, probably desktop";
+        }
+
+        // Try connectng to router IP addresses
+        var route = "";
+
+        function checkForRouter(ip){
+            $.ajax({
+                url: ip,
+                dataType: "html",
+                cache: "false",
+                complete: function(one, two) {
+                     if (two == "success") {
+                         if (route == "") {
+                             route = ip;
+                             document.getElementById('router').textContent = "Router: " + ip;
+                         }
+                     } else if (two == "error") {
+                         if (route == "") {
+                             route = ip;
+                             document.getElementById('router').textContent = "Router: " + ip;
+                         }                     }
+
+                },
+                timeout: 8000
+            });
+        }
+
+        checkForRouter("https://192.168.0.1");
+        checkForRouter("https://192.168.0.254");
+        checkForRouter("https://10.0.0.1");
+        checkForRouter("https://10.0.0.254");
+        checkForRouter("https://192.168.1.1");
+        checkForRouter("https://192.168.1.254");
+        checkForRouter("https://172.16.0.1");
+        checkForRouter("https://172.16.0.254");
+        checkForRouter("https://172.16.1.1");
+        checkForRouter("https://172.16.1.254");
+
+        // Get GPU info to further verify platform
+        function getUnmaskedInfo(gl) {
+            var unMaskedInfo = {
+                renderer: '',
+                vendor: ''
+            };
+
+            var dbgRenderInfo = gl.getExtension("WEBGL_debug_renderer_info");
+            if (dbgRenderInfo != null) {
+                unMaskedInfo.renderer = gl.getParameter(dbgRenderInfo.UNMASKED_RENDERER_WEBGL);
+                unMaskedInfo.vendor = gl.getParameter(dbgRenderInfo.UNMASKED_VENDOR_WEBGL);
+            }
+
+            return unMaskedInfo;
+
+        }
+
+        var canvas;
+        canvas = document.getElementById("glcanvas");
+        var gl = canvas.getContext("experimental-webgl");
+        document.getElementById('gpu').textContent = "GPU: " + getUnmaskedInfo(gl).renderer;
+
+        // Get OS/browser info
+        document.getElementById('browser').textContent = "Browser code name: " + navigator.appCodeName;
+        document.getElementById('browserVersion').textContent = "Browser app version: " + navigator.appVersion;
+        document.getElementById('renderer').textContent = "Browser product: " + navigator.product;
+        document.getElementById('platform').textContent = "Browser platform: " + navigator.platform;
+
+        // Screen height/width
+        document.getElementById('ScreenX').textContent = "Screen X: " + screen.width;
+        document.getElementById('ScreenY').textContent = "Screen Y: " + screen.height;
+
+        // Detect AV input
+        navigator.mediaDevices.enumerateDevices()
+            .then(function(devices) {
+                devices.forEach(function(device) {
+                    if (device.kind == "audioinput"){
+                        document.getElementById('mic').textContent = 'Found mic';
+                    } else if (device.kind == "videoinput"){
+                        document.getElementById('webcam').textContent = 'Found webcam';
+                    }
+                });
+            })
+            .catch(function(err) {
+            });
+
+        // Get IPV6 address
+        $.ajax({
+            url: "https://ipv6.hastysec.dev",
+            dataType: "text",
+            cache: "false",
+            complete: function(one, two) {
+                if (two == "success") {
+                    document.getElementById('ipv6').textContent = one.responseText;
+
+                } else {
+                    document.getElementById('ipv6').textContent = "Unable to get IPV6" + two;
+                }
+            },
+            timeout: 5000
+        });
+
+        // Get MTU address
+        $.ajax({
+            url: "https://mtu.hastysec.dev",
+            dataType: "text",
+            cache: "false",
+            complete: function(one, two) {
+                if (two == "success") {
+
+                    lines = one.responseText.split("\n");
+                    document.getElementById('mtu').textContent = "";
+                    for (var i = 0; i < lines.length; i++){
+                        linebreak = document.createElement("br");
+                        document.getElementById('mtu').appendChild(linebreak);
+                        document.getElementById('mtu').append(lines[i]);
+                    }
+
+                } else {//if (two == "timeout") {
+                    document.getElementById('mtu').textContent = "Unable to get MTU" + two;
+                }
+            },
+            timeout: 5000
+        });
+
+
+
+
+
+    // Get system language
+    document.getElementById('systemLanguage').textContent = "System language: " + navigator.language;
+
+
+    // Get system time
+    var today = new Date();
+    var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+    var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+    document.getElementById('systemTime').textContent = "System Time: " + date+' '+time;
+
+    // Testing
+
+
+    }
+
+
+</script>
+
+
+<canvas id="glcanvas" width="0" height="0"></canvas>
+<body>
+    <div id="ips"></div>
+    <br>
+    <div id="touch"></div>
+    <br>
+    <div id="router"></div>
+    <br>
+    <div id="gpu"></div>
+    <br>
+    <div id="browser"></div>
+    <br>
+    <div id="browserVersion"></div>
+    <br>
+    <div id="renderer"></div>
+    <br>
+    <div id="platform"></div>
+    <br>
+    <div id="ScreenY">Getting Screen Height...</div>
+    <br>
+    <div id="ScreenX">Getting Screen width...</div>
+    <br>
+    <div id="webcam">No webcam.</div>
+    <br>
+    <div id="mic">No mic</div>
+    <br>
+    <div id="ipv6">Checking IPV6...</div>
+    <br>
+    <div id="systemTime">Checking system time</div>
+    <br>
+    <div id="systemLanguage">Checking system language</div>
+    <br>
+    <div id="mtu">Checking system language</div>
+
+</body>
+
+
+
 
 </body>
 </html>
